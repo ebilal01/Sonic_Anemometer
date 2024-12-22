@@ -5,6 +5,10 @@ import threading
 import time
 from collections import deque
 import datetime
+import os
+import json
+import random
+from flask import render_template
 
 
 app = Flask(__name__)
@@ -42,6 +46,10 @@ def generate_realistic_data():
         "altitude": current_position["altitude"],
         "temperature": current_position["temperature"]
     })
+
+@app.route('/')
+def index():
+    return render_template('index4.html')  # Make sure this points to your HTML file
 
 @app.route('/live-data', methods=['GET'])
 def live_data():
