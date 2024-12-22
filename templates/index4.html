@@ -73,6 +73,15 @@
         }
     });
 
+    // Function to decode hex string to normal text
+    function hexToString(hex) {
+        let str = '';
+        for (let i = 0; i < hex.length; i += 2) {
+            str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+        }
+        return str;
+    }
+
     // Function to update the graph
     function updateGraph() {
         fetch(`${BASE_URL}/history`)
@@ -80,11 +89,15 @@
             .then(history => {
                 if (history.length > 0) {
                     const latestData = history[history.length - 1];
-                    const { time, altitude } = latestData;
-                    
-                    // Append only if new data is received
-                    if (!times.includes(time)) {
-                        times.push(time);
+                    const { imei, username, password, data: hexData } = latestData;
+
+                    // Decode the hex data
+                    const decodedData = hexToString(hexData);
+                    const [latitude, longitude, altitude, temperature] = decodedData.split(',');
+
+                    // Update graph data
+                    if (!times.includes(latestData.time)) {
+                        times.push(latestData.time);
                         altitudes.push(altitude);
 
                         altitudeChart.data.labels = times;
@@ -104,12 +117,16 @@
             .then(response => response.json())
             .then(data => {
                 if (data.latitude && data.longitude) {
-                    const { latitude, longitude, altitude, temperature } = data;
+                    const { imei, username, password, data: hexData } = data;
+
+                    // Decode the hex data
+                    const decodedData = hexToString(hexData);
+                    const [latitude, longitude, altitude, temperature] = decodedData.split(',');
 
                     // Update marker location on the map
                     marker.setLatLng([latitude, longitude]);
                     marker.bindPopup(
-                        `Satellite Location<br>Lat: ${latitude.toFixed(4)}, Long: ${longitude.toFixed(4)}<br>Alt: ${altitude}m<br>Temp: ${temperature}°C`
+                        `Satellite Location<br>Lat: ${latitude}<br>Long: ${longitude}<br>Alt: ${altitude}m<br>Temp: ${temperature}°C`
                     ).openPopup();
 
                     // Update flight path
@@ -130,13 +147,14 @@
         fetch(`${BASE_URL}/history`)
             .then(response => response.json())
             .then(history => {
-                if (history.length > 0) {
-                    history.forEach(point => flightPath.push([point.latitude, point.longitude]));
-                    pathLine.setLatLngs(flightPath);
-                    map.fitBounds(pathLine.getBounds());
-                } else {
-                    console.log('No history data available to load initial path.');
-                }
+                history.forEach(point => {
+                    // Decode the hex data
+                    const decodedData = hexToString(point.data);
+                    const [latitude, longitude] = decodedData.split(',');
+                    flightPath.push([parseFloat(latitude), parseFloat(longitude)]);
+                });
+                pathLine.setLatLngs(flightPath);
+                map.fitBounds(pathLine.getBounds());
             })
             .catch(error => console.error('Error loading initial path:', error));
     }
