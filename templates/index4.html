@@ -1,4 +1,80 @@
-function updateGraph() {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Data Display</title>
+    <link rel="stylesheet" type="text/css" href="static/format.css">
+    <!-- Leaflet.js and its CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <!-- Chart.js and Time Adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+<header>
+    <div class="header-content">
+        <h3>Satellite Network Data Display</h3>
+        <h6>Professor Robert White Ph.D.</h6>
+    </div>
+    <nav>
+        <ul class="nav_links">
+            <li><a href="https://sites.tufts.edu/senselab/research/#anemometer">MSS Lab Site</a></li>
+        </ul>
+    </nav>
+</header>
+
+<!-- Map Container -->
+<div id="map" style="height: 500px; margin-bottom: 20px;"></div>
+
+<!-- Graph Container -->
+<canvas id="altitudeChart" width="400" height="200"></canvas>
+
+<script>
+    const BASE_URL = 'https://sonic-anemometer.onrender.com/'; // Flask backend address
+
+    // Initialize the map
+    const map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const marker = L.marker([0, 0]).addTo(map);
+    const flightPath = [];
+    const pathLine = L.polyline(flightPath, { color: 'blue' }).addTo(map);
+
+    // Data arrays for graph updates
+    const times = [];
+    const altitudes = [];
+
+    // Initialize Chart.js
+    const ctx = document.getElementById('altitudeChart').getContext('2d');
+    const altitudeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: times,
+            datasets: [{
+                label: 'Altitude (m)',
+                data: altitudes,
+                borderColor: 'rgb(75, 192, 192)',
+                fill: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { title: { display: true, text: 'Time' } },
+                y: { title: { display: true, text: 'Altitude (m)' } }
+            },
+            animation: false
+        }
+    });
+
+    // Function to update the graph
+   function updateGraph() {
     fetch(`${BASE_URL}/history`)
         .then(response => response.json())
         .then(history => {
@@ -46,3 +122,25 @@ function updateMapAndPath() {
         .catch(error => console.error('Error updating map and path:', error));
 }
 
+
+    // Initial data load
+    function loadInitialPath() {
+        fetch(`${BASE_URL}/history`)
+            .then(response => response.json())
+            .then(history => {
+                history.forEach(point => flightPath.push([point.latitude, point.longitude]));
+                pathLine.setLatLngs(flightPath);
+                map.fitBounds(pathLine.getBounds());
+            })
+            .catch(error => console.error('Error loading initial path:', error));
+    }
+
+    // Run initial setup
+    loadInitialPath();
+
+    // Periodic updates
+    setInterval(updateGraph, 5000); // Update graph every 5 seconds
+    setInterval(updateMapAndPath, 5000); // Update map every 5 seconds
+</script>
+</body>
+</html>
