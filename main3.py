@@ -55,13 +55,23 @@ def live_data():
 def history():
     return jsonify(list(data_history))
 
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    """Receive simulated RockBLOCK HTML response."""
+    try:
+        # Simulate receiving RockBLOCK POST data
+        simulated_data = generate_realistic_data()  # Using the same data generation logic
+
+        # Save to history
+        data_history.append(simulated_data)
+
+        return jsonify({"message": "Simulated RockBLOCK data received"}), 200
+    except Exception as e:
+        return jsonify({"message": "Error processing data", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     threading.Thread(target=continuous_data_simulation, daemon=True).start()
     app.run(host="0.0.0.0", port=5000, debug=True)
 
-
-
-if __name__ == "__main__":
-    threading.Thread(target=continuous_data_simulation, daemon=True).start()
-    app.run(host="0.0.0.0", port=5000, debug=True)
 
