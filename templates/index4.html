@@ -99,6 +99,7 @@
         .catch(error => console.error('Error updating graph:', error));
 }
 
+// Function to update the map and flight path
 function updateMapAndPath() {
     fetch(`${BASE_URL}/live-data`)
         .then(response => response.json())
@@ -116,8 +117,10 @@ function updateMapAndPath() {
                 flightPath.push([latitude, longitude]);
                 pathLine.setLatLngs(flightPath);
 
-                // Adjust map bounds to fit updated path
-                map.fitBounds(pathLine.getBounds());
+                // Adjust map bounds to fit updated path, only if there is data
+                if (flightPath.length > 0) {
+                    map.fitBounds(pathLine.getBounds());
+                }
             }
         })
         .catch(error => console.error('Error updating map and path:', error));
