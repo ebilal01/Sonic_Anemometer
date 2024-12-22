@@ -14,8 +14,8 @@ data_history = deque(maxlen=1000)
 current_position = {
     "latitude": 0.0,
     "longitude": 0.0,
-    "altitude": 500,  
-    "temperature": 25.0  
+    "altitude": 500,
+    "temperature": 25.0
 }
 
 def generate_realistic_data():
