@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, render_template, jsonify, request
 import random
 import time
 import json
@@ -21,6 +21,10 @@ def save_flight_data(flight_data):
     # Save the updated flight history
     with open('flight_data.json', 'w') as f:
         json.dump(flight_history, f)
+
+@app.route('/')
+def index():
+    return render_template('index4.html')  # Serve the frontend HTML
 
 @app.route('/live-data', methods=['GET'])
 def live_data():
@@ -64,6 +68,7 @@ def receive_mt():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
