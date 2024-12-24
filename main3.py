@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, jsonify
 import random
 import time
 import json
@@ -6,40 +6,37 @@ import os
 
 app = Flask(__name__)
 
-# Define the path to store flight data
-FLIGHT_DATA_FILE = 'flight_data.json'
+# Ensure flight data is saved to a file
+def save_flight_data(flight_data):
+    if not os.path.exists('flight_data.json'):
+        with open('flight_data.json', 'w') as f:
+            json.dump([], f)  # Initialize the file with an empty list
 
-# Load the flight data from the file if it exists
-def load_flight_data():
-    if os.path.exists(FLIGHT_DATA_FILE):
-        with open(FLIGHT_DATA_FILE, 'r') as file:
-            return json.load(file)
-    return {
-        'latitude': None,
-        'longitude': None,
-        'timestamps': [],
-        'altitudes': []
-    }
+    with open('flight_data.json', 'r') as f:
+        flight_history = json.load(f)
 
-# Save flight data to the file
-def save_flight_data(data):
-    with open(FLIGHT_DATA_FILE, 'w') as file:
-        json.dump(data, file)
+    # Append the new flight data
+    flight_history.append(flight_data)
 
-# Load the current flight data
-flight_data = load_flight_data()
-
-@app.route('/')
-def index():
-    return render_template('index4.html')
+    # Save the updated flight history
+    with open('flight_data.json', 'w') as f:
+        json.dump(flight_history, f)
 
 @app.route('/live-data', methods=['GET'])
 def live_data():
-    # Return the most recent RockBLOCK data (if available)
-    if flight_data['latitude'] is not None and flight_data['longitude'] is not None:
-        return jsonify(flight_data)
-    else:
-        return jsonify({"error": "No live data available"}), 404
+    # Simulate flight data with random values for testing
+    data = {
+        "latitude": random.uniform(-90.0, 90.0),
+        "longitude": random.uniform(-180.0, 180.0),
+        "timestamps": [time.time() - i * 60 for i in range(10)],
+        "altitudes": [random.uniform(1000, 20000) for _ in range(10)]
+    }
+
+    # Save flight data to file
+    save_flight_data(data)
+
+    # Return the simulated live data
+    return jsonify(data)
 
 @app.route('/rockblock/MT', methods=['POST'])
 def receive_mt():
@@ -48,13 +45,8 @@ def receive_mt():
     password = request.args.get('password')
     data = request.args.get('data')
 
-    # Replace these with your actual RockBLOCK credentials
-    VALID_IMEI = "your_imei_here"
-    VALID_USERNAME = "your_username_here"
-    VALID_PASSWORD = "your_password_here"
-
-    # Validate input
-    if imei != VALID_IMEI or username != VALID_USERNAME or password != VALID_PASSWORD:
+    # Validate input (simulate simple validation for testing)
+    if imei != "300434065264590" or username != "myUser" or password != "myPass":
         return "FAILED,10,Invalid login credentials", 400
 
     if not data:
@@ -63,31 +55,16 @@ def receive_mt():
     # Simulate decoding hex data
     try:
         decoded_message = bytes.fromhex(data).decode('utf-8')
-        print(f"Decoded message: {decoded_message}")
     except ValueError:
         return "FAILED,14,Could not decode hex data", 400
 
-    # Example: Parsing the decoded message for latitude, longitude, altitude
-    try:
-        lat, lon, alt = map(float, decoded_message.split(','))
-    except ValueError:
-        return "FAILED,14,Could not parse the data correctly", 400
-
-    # Update the flight data with the received values
-    flight_data['latitude'] = lat
-    flight_data['longitude'] = lon
-    flight_data['altitudes'].append(alt)
-    flight_data['timestamps'].append(time.time())
-
-    # Save the updated flight data to the file
-    save_flight_data(flight_data)
-
-    print(f"Received data - Latitude: {lat}, Longitude: {lon}, Altitude: {alt}")
+    print(f"Received message: {decoded_message}")
 
     return "OK,4114651"
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
