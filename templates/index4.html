@@ -41,7 +41,8 @@
             Plotly.newPlot('graph', data);
         };
 
-        const baseURL = window.location.hostname === 'localhost' ? 'http://127.0.0.1:5000' : 'https://sonic-anemometer.onrender.com';
+        // Direct URL for Render app
+        const baseURL = 'https://sonic-anemometer.onrender.com';  // Replace with your actual Render app URL
 
         const fetchData = async () => {
             try {
@@ -65,6 +66,7 @@
     </script>
 </body>
 </html>
+
 
 
 
