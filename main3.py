@@ -6,21 +6,31 @@ import os
 
 app = Flask(__name__)
 
+# Path to store flight data history
+FLIGHT_HISTORY_FILE = 'flight_data.json'
+
 # Ensure flight data is saved to a file
 def save_flight_data(flight_data):
-    if not os.path.exists('flight_data.json'):
-        with open('flight_data.json', 'w') as f:
+    if not os.path.exists(FLIGHT_HISTORY_FILE):
+        with open(FLIGHT_HISTORY_FILE, 'w') as f:
             json.dump([], f)  # Initialize the file with an empty list
 
-    with open('flight_data.json', 'r') as f:
+    with open(FLIGHT_HISTORY_FILE, 'r') as f:
         flight_history = json.load(f)
 
     # Append the new flight data
     flight_history.append(flight_data)
 
     # Save the updated flight history
-    with open('flight_data.json', 'w') as f:
+    with open(FLIGHT_HISTORY_FILE, 'w') as f:
         json.dump(flight_history, f)
+
+# Load the flight history from the file
+def load_flight_history():
+    if not os.path.exists(FLIGHT_HISTORY_FILE):
+        return []  # No history available
+    with open(FLIGHT_HISTORY_FILE, 'r') as f:
+        return json.load(f)
 
 @app.route('/')
 def index():
@@ -41,6 +51,12 @@ def live_data():
 
     # Return the simulated live data
     return jsonify(data)
+
+@app.route('/history', methods=['GET'])
+def history():
+    # Load and return all flight history data
+    flight_history = load_flight_history()
+    return jsonify(flight_history)
 
 @app.route('/rockblock/MT', methods=['POST'])
 def receive_mt():
@@ -68,6 +84,7 @@ def receive_mt():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
